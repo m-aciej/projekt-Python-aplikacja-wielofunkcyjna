@@ -1,5 +1,5 @@
 import ttkbootstrap as tb
-from ttkbootstrap.constants import LEFT, RIGHT, BOTH, X, Y, NS, NSEW, TOP
+from ttkbootstrap.constants import LEFT, RIGHT, X, NSEW
 
 from frames.home_frame import HomeFrame
 from frames.calculator_frame import CalculatorFrame
@@ -8,96 +8,90 @@ from frames.reader_frame import ReaderFrame
 from frames.about_frame import AboutFrame
 
 class App(tb.Window):
+    APP_NAME = "Aplikacja wielofunkcyjna"
+
     def __init__(self):
         super().__init__(themename="flatly")
 
-        self.title("Aplikacja wielofunkcyjna")
+        self.title(self.APP_NAME)
         self.geometry("1000x650")
         self.minsize(860, 520)
 
         self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=1)
 
         self.labels = {
             "HomeFrame": "Strona główna",
             "CalculatorFrame": "Kalkulator",
             "TimerFrame": "Timer",
             "ReaderFrame": "Szacowanie czasu czytania",
-            "AboutFrame": "O programie",
+            "AboutFrame": "O programie"
         }
 
-        self._nav_buttons: dict[str, tb.Button] = {}
-
-        self._create_sidebar()
-        self._create_container()
+        self._create_topbar()
+        self._create_content_container()
         self._create_frames()
         self.show_frame("HomeFrame")
 
-    def _create_sidebar(self) -> None:
-        self.sidebar = tb.Frame(self, padding=(14, 16))
-        self.sidebar.grid(row = 0, column = 0, sticky= NS)
+    def _create_topbar(self) -> None:
+        self.topbar = tb.Frame(self, padding=(16, 16))
+        self.topbar.grid(row=0, column=0, sticky="ew")
+        self.topbar.columnconfigure(0, weight=1)
+        self.topbar.columnconfigure(1, weight=0)
 
-        self.sidebar.grid_propagate(False)
-        self.sidebar.configure(width=260)
+        left = tb.Frame(self.topbar)
+        left.grid(row=0, column=0, sticky="w")
 
-        title = tb.Label(
-            self.sidebar,
-            text="Aplikacja\nwielofunkcyjna",
-            font=("Segoe UI", 16, "bold"),
-            justify=LEFT
+        self.app_label = tb.Label(
+            left,
+            text = self.APP_NAME,
+            font=("Segoe UI", 30, "bold"),
+            justify=LEFT,
         )
-        title.pack(anchor="w", pady=(0, 14))
+        self.app_label.pack(anchor="w")
 
-        subtitle = tb.Label(
-            self.sidebar,
-            text = "Wybierz moduł",
-            font = ("Segoe UI", 10),
+        self.module_label = tb.Label(
+            left,
+            text="",
+            font=("Segoe UI", 13, "bold"),
+            justify=LEFT,
         )
-        subtitle.pack(anchor="w", pady=(0, 18))
+        self.module_label.pack(anchor="w", pady=(6,10))
 
-        nav = tb.Frame(self.sidebar)
-        nav.pack(fill=X, expand=False)
+        right = tb.Frame(self.topbar)
+        right.grid(row=0, column=1, sticky="e")
 
-        nav_items = [
-            ("HomeFrame", "Strona główna"),
-            ("CalculatorFrame", "Kalkulator"),
-            ("TimerFrame", "Timer"),
-            ("ReaderFrame", "Szacowanie czasu czytania"),
-            ("AboutFrame", "O programie"),
-        ]
-
-        for frame_name, text in nav_items:
-            btn = tb.Button(
-                nav,
-                text = text,
-                bootstyle="secondary-outline",
-                command=lambda n = frame_name: self.show_frame(n),
-                width=24,
-            )
-            btn.pack(fill=X, pady=6)
-            self._nav_buttons[frame_name] = btn
-
-        tb.Separator(self.sidebar).pack(fill=X, pady=(18, 14))
-
-        quit_btn = tb.Button(
-            self.sidebar,
-            text="Zamknij program",
-            bootstyle="danger",
-            command=self.destroy,
+        self.btn_home = tb.Button(
+            right,
+            text = "Home",
+            bootstyle="secondary-outline",
+            command = lambda: self.show_frame("HomeFrame"),
+            width = 10,
         )
-        quit_btn.pack(side=TOP, fill=X)
+        self.btn_close = tb.Button(
+            right,
+            text = "Zamknij",
+            bootstyle = "danger-outline",
+            command = self.destroy,
+            width = 10,
+        )
 
-    def _create_container(self) -> None:
-        self.container = tb.Frame(self, padding=18)
-        self.container.grid(row=0, column=1, sticky=NSEW)
-        self.container.rowconfigure(0, weight=1)
-        self.container.columnconfigure(0, weight=1)
+        self.btn_close.pack(side=RIGHT)
+        self.btn_home.pack(side=RIGHT, padx=(0, 10))
+
+        tb.Separator(self.topbar).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(6,0))
+
+    def _create_content_container(self) -> None:
+        self.content = tb.Frame(self, padding=18)
+        self.content.grid(row=1, column=0, sticky = NSEW)
+        self.content.rowconfigure(0, weight=1)
+        self.content.columnconfigure(0, weight=1)
 
     def _create_frames(self) -> None:
         self.frames: dict[str, tb.Frame] = {}
         for FrameClass in (HomeFrame, CalculatorFrame, TimerFrame, ReaderFrame, AboutFrame):
-            frame = FrameClass(self.container, app=self)
+            frame = FrameClass(self.content, app=self)
             name = FrameClass.__name__
             self.frames[name] = frame
             frame.grid(row=0, column=0, sticky=NSEW)
@@ -107,13 +101,12 @@ class App(tb.Window):
         frame.tkraise()
 
         label = self.labels.get(name, name)
-        self.title(f"Aplikacja wielofunkcyjna - {label}")
+        self.module_label.configure(text=label)
+        self.title(f"{self.APP_NAME} - {label}")
 
-        for frame_name, btn in self._nav_buttons.items():
-            if frame_name == name:
-                btn.configure(bootstyle="primary")
-            else:
-                btn.configure(bootstyle="secondary-outline")
+        if name == "HomeFrame":
+            if self.btn_home.winfo_ismapped():
+                self.btn_home.pack(side=RIGHT, padx=(0, 10))
 
 if __name__ == "__main__":
     app = App()
