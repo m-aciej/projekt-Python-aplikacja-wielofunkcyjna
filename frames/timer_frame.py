@@ -13,16 +13,5 @@ class TimerFrame(ttk.Frame):
         topbar.grid(row=0, column=0, sticky="ew", pady=(0, 12))
         topbar.columnconfigure(1, weight=1)
 
-        ttk.Button(topbar, text="Strona główna", command=lambda: app.show_frame("HomeFrame")).grid(
-            row=0, column=0, padx=(0, 10)
-        )
-
-        ttk.Label(
-            topbar,
-            text=app.labels.get("TimerFrame", "Timer"),
-            font=("TkDefaultFont", 16, "bold")
-        ).grid(row=0, column=1, sticky="w")
-
         body = ttk.Frame(self)
         body.grid(row=1, column=0, sticky="nsew")
-        ttk.Label(body, text="(Tu wstawisz minutnik/stoper)").grid(row=0, column=0, sticky="w")
